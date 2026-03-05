@@ -1,9 +1,16 @@
-export default async (req) => {
+export default async (request) => {
   try {
-    const payload = JSON.parse(req.body || "{}");
+    const payload = await request.json();
 
     const backendUrl = process.env.BACKEND_URL; // https://carwash-backend-nq39.onrender.com
     const ingestKey = process.env.INGEST_KEY;   // super_clave_segura_123
+
+    if (!backendUrl || !ingestKey) {
+      return new Response(
+        JSON.stringify({ error: "Missing BACKEND_URL or INGEST_KEY env vars" }),
+        { status: 500, headers: { "content-type": "application/json" } }
+      );
+    }
 
     const r = await fetch(`${backendUrl}/api/sessions`, {
       method: "POST",
@@ -15,12 +22,16 @@ export default async (req) => {
     });
 
     const text = await r.text();
-    return {
-      statusCode: r.status,
-      headers: { "Content-Type": "application/json" },
-      body: text,
-    };
+
+    // Devuelve tal cual lo que responda el backend
+    return new Response(text, {
+      status: r.status,
+      headers: { "content-type": "application/json" },
+    });
   } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
   }
 };
