@@ -51,6 +51,9 @@ code{
 <h2>Carwash</h2>
 
 <button id="btn">START</button>
+<button id="mlBtn" style="width:220px;height:70px;border-radius:12px;margin-top:20px;background:#34495e;">
+  EJECUTAR ML
+</button>
 
 <div class="timer" id="timer">0 s</div>
 
@@ -111,7 +114,27 @@ async function sendSession(endTime){
   document.getElementById("result").innerText =
     "HTTP "+r.status+"\n"+text;
 }
+async function runML(){
+  document.getElementById("status").innerText = "Ejecutando ML...";
+  document.getElementById("result").innerText = "Ejecutando ML...";
 
+  const r = await fetch("/.netlify/functions/mlRun", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ deviceId: DEVICE_ID, contamination: 0.05 })
+  });
+
+  const text = await r.text();
+  document.getElementById("result").innerText = "HTTP " + r.status + "\n" + text;
+
+  if(r.ok){
+    document.getElementById("status").innerText = "ML ejecutado (anomalías actualizadas)";
+  } else {
+    document.getElementById("status").innerText = "Error ejecutando ML";
+  }
+}
+
+document.getElementById("mlBtn").onclick = runML;
 document.getElementById("btn").onclick = async () => {
 
   const btn = document.getElementById("btn");
