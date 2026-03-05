@@ -113,18 +113,15 @@ async function sendSession(endTime){
 
   document.getElementById("result").innerText =
     "HTTP "+r.status+"\n"+text;
-}
-async function runML(){
+}async function runML(){
   document.getElementById("status").innerText = "Ejecutando ML...";
   document.getElementById("result").innerText = "Ejecutando ML...";
 
-  const r = await fetch("/.netlify/functions/mlRun", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ deviceId: DEVICE_ID, contamination: 0.05 })
-  });
+  const url = `https://carwash-backend-nq39.onrender.com/api/ml/run?deviceId=${encodeURIComponent(DEVICE_ID)}&contamination=0.05`;
 
+  const r = await fetch(url, { method: "POST" });
   const text = await r.text();
+
   document.getElementById("result").innerText = "HTTP " + r.status + "\n" + text;
 
   if(r.ok){
