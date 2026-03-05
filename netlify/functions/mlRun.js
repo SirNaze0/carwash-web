@@ -1,20 +1,29 @@
-export default async (request) => {
+exports.handler = async (event) => {
   try {
-    const body = await request.json().catch(() => ({}));
-    const deviceId = body.deviceId || "carwash-01";
-    const contamination = body.contamination ?? 0.05;
-
     const backendUrl = process.env.BACKEND_URL; // https://carwash-backend-nq39.onrender.com
-    const mlKey = process.env.ML_KEY;           // clave secreta (solo server)
-
+    const mlKey = process.env.ML_KEY;           // igual que en Render
     if (!backendUrl || !mlKey) {
-      return new Response(
-        JSON.stringify({ error: "Missing BACKEND_URL or ML_KEY env vars" }),
-        { status: 500, headers: { "content-type": "application/json" } }
-      );
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Missing BACKEND_URL or ML_KEY env vars" }),
+      };
     }
 
-    const url = `${backendUrl}/api/ml/run?deviceId=${encodeURIComponent(deviceId)}&contamination=${encodeURIComponent(contamination)}`;
+    let body = {};
+    try {
+      body = event.body ? JSON.parse(event.body) : {};
+    } catch (_) {
+      body = {};
+    }
+
+    const deviceId = body.deviceId || "carwash-01";
+    const contamination = (body.contamination ?? 0.05);
+
+    const url =
+      `${backendUrl}/api/ml/run` +
+      `?deviceId=${encodeURIComponent(deviceId)}` +
+      `&contamination=${encodeURIComponent(contamination)}`;
 
     const r = await fetch(url, {
       method: "POST",
@@ -24,14 +33,16 @@ export default async (request) => {
     });
 
     const text = await r.text();
-    return new Response(text, {
-      status: r.status,
-      headers: { "content-type": "application/json" },
-    });
+    return {
+      statusCode: r.status,
+      headers: { "Content-Type": "application/json" },
+      body: text,
+    };
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: e.message }),
+    };
   }
 };
